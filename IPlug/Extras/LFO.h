@@ -228,7 +228,7 @@ private:
     return mLastOutput;
   }
 
-private:
+public:
   T mLastOutput = 0.;
   T mLevelScalar = 1.; // Non clipped, or smoothed scalar value
   T mQNScalar = 1.;
