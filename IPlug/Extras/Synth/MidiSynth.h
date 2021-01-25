@@ -118,6 +118,11 @@ public:
     mVoiceAllocator.SetControlGlideTime(t);
   }
 
+  void SetLegato(bool legato)
+  {
+    mVoiceAllocator.SetLegato(legato);
+  }
+
   SynthVoice* GetVoice(int voiceIdx)
   {
     return mVoiceAllocator.GetVoice(voiceIdx);

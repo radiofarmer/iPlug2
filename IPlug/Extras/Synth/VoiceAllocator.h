@@ -112,6 +112,7 @@ public:
   void SetSampleRateAndBlockSize(double sampleRate, int blockSize) { mSampleRate = sampleRate; CalcGlideTimesInSamples(); }
   void SetNoteGlideTime(double t) { mNoteGlideTime = t; CalcGlideTimesInSamples(); }
   void SetControlGlideTime(double t) { mControlGlideTime = t; CalcGlideTimesInSamples(); }
+  void SetLegato(bool legato) { mLegato = legato; }
 
   /** Add a synth voice to the allocator. We do not take ownership ot the voice.
    @param pv Pointer to the voice to add.
