@@ -170,6 +170,7 @@ private:
   std::vector<std::unique_ptr<VoiceControlRamps>> mVoiceGlides;
   std::vector<int> mHeldKeys; // The currently physically held keys on the keyboard
   std::vector<int> mSustainedNotes; // Any notes that are sustained, including those that are physically held
+  bool mLegato{ false };
 
   std::function<float(int)> mKeyToPitchFn;
   double mPitchOffset{0.};

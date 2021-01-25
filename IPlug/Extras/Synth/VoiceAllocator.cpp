@@ -411,10 +411,10 @@ void VoiceAllocator::NoteOn(VoiceInputEvent e, int64_t sampleTime)
     case kPolyModeMono:
     {
       // TODO retrig / legato
-      bool retrig = false;
-
       // trigger all voices in zone
-      StartVoices(VoicesMatchingAddress({e.mAddress.mZone, kAllChannels, kAllKeys, 0}), channel, key, pitch, velocity, offset, sampleTime, retrig);
+      //StartVoices(VoicesMatchingAddress({e.mAddress.mZone, kAllChannels, kAllKeys, 0}), channel, key, pitch, velocity, offset, sampleTime, mLegato);
+
+      StartVoice(0, channel, key, pitch, velocity, offset, sampleTime, mLegato);
 
       // in mono modes only ever 1 sustained note
       mSustainedNotes.clear();
@@ -433,8 +433,7 @@ void VoiceAllocator::NoteOn(VoiceInputEvent e, int64_t sampleTime)
       }
       if(i >= 0)
       {
-        bool retrig = false;
-        StartVoice(i, channel, key, pitch, velocity, offset, sampleTime, retrig);
+        StartVoice(i, channel, key, pitch, velocity, offset, sampleTime, mLegato);
       }
       break;
     }
@@ -493,7 +492,7 @@ void VoiceAllocator::NoteOff(VoiceInputEvent e, int64_t sampleTime)
     else if(mSustainPedalDown)
     {
       if(!mSustainedNotes.empty())
-      {
+      { 
         queuedKey = mSustainedNotes.back();
         if (queuedKey != mVoicePtrs[0]->mKey)
         {
@@ -504,7 +503,7 @@ void VoiceAllocator::NoteOff(VoiceInputEvent e, int64_t sampleTime)
     else
     {
       // there are no held keys, so no voices in the zone should be playing.
-      StopVoices(VoicesMatchingAddress({e.mAddress.mZone, kAllChannels, kAllKeys, 0}), offset);
+      StopVoice(0, offset);
     }
 
     if(doPlayQueuedKey)
@@ -514,7 +513,7 @@ void VoiceAllocator::NoteOff(VoiceInputEvent e, int64_t sampleTime)
       float pitch = mKeyToPitchFn(queuedKey + static_cast<int>(mPitchOffset));
       bool retrig = false;
 
-      StartVoices(VoicesMatchingAddress({e.mAddress.mZone, kAllChannels, kAllKeys, 0}), channel, queuedKey, pitch, mMinHeldVelocity, offset, sampleTime, retrig);
+      StartVoice(0, channel, queuedKey, pitch, mMinHeldVelocity, offset, sampleTime, mLegato);
     }
   }
   else // poly
