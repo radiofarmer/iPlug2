@@ -19,7 +19,7 @@
 
 BEGIN_IPLUG_NAMESPACE
 
-#define LFO_TEMPODIV_VALIST "1/64", "1/32", "1/16T", "1/16", "1/16D", "1/8T", "1/8", "1/8D", "1/4", "1/4D", "1/2", "1/1", "2/1", "4/1", "8/1"
+#define LFO_TEMPODIV_VALIST "1/64", "1/32", "1/16T", "1/16", "1/16D", "1/8T", "1/8", "1/8D", "1/4", "1/4D", "1/2", "1/1", "2/1", "4/1", "8/1", "16/1"
 
 #define LFO_SHAPE_VALIST "Triangle", "Square", "Ramp Up", "Ramp Down", "Sine"
 
@@ -44,6 +44,7 @@ public:
     k2,          // 2 bars @ 4/4
     k4,          // 4 bars @ 4/4
     k8,          // 8 bars @ 4/4
+    k16,         // 16 bars @ 4/4
     kNumDivisions
   };
 
@@ -88,6 +89,7 @@ public:
       0.5   / 4., // k2,          // 2 bars @ 4/4
       0.25  / 4., // k4,          // 4 bars @ 4/4
       0.125 / 4., // k8,          // 8 bars @ 4/4
+      0.125 / 8., // k16          // 16 bars @ 4/4
     };
     
     return scalars[division];
