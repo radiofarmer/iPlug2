@@ -107,12 +107,29 @@ public:
     return mReleased;
   }
   
-  /** @return the previously output value */
+  /** @return the previous output value */
   T GetPrevOutput() const
   {
     return mPrevOutput;
   }
-  
+
+  /** @return the previous (unscaled) envelope value */
+  T GetPrevResult() const
+  {
+    return mPrevResult;
+  }
+
+  T GetValue() const
+  {
+    return mEnvValue;
+  }
+
+  /** @return the current stage */
+  int GetStage() const
+  {
+    return mStage;
+  }
+
   /** Trigger/Start the envelope 
    * @param level The overall depth of the envelope (usually linked to MIDI velocity)  
    * @param timeScalar Factor to scale the envelope's rates. Use this, for example to adjust the envelope stage rates based on the key pressed */
@@ -123,6 +140,16 @@ public:
     mLevel = level;
     mScalar = 1./timeScalar;
     mReleased = false;
+  }
+
+  inline void StartAt(T level, T envValue, T prevResult, int stage, T timeScalar = 1.)
+  {
+    mLevel = level;
+    mEnvValue = envValue;
+    mPrevResult = prevResult;
+    mStage = stage;
+    mReleased = stage == kRelease;
+    mScalar = 1. / timeScalar;
   }
 
   /** Release the envelope */

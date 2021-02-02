@@ -411,10 +411,11 @@ void VoiceAllocator::NoteOn(VoiceInputEvent e, int64_t sampleTime)
     case kPolyModeMono:
     {
       // TODO retrig / legato
+      bool retrigger = false; // false if at least one voice is active and legato is activated
       // trigger all voices in zone
       //StartVoices(VoicesMatchingAddress({e.mAddress.mZone, kAllChannels, kAllKeys, 0}), channel, key, pitch, velocity, offset, sampleTime, mLegato);
 
-      StartVoice(0, channel, key, pitch, velocity, offset, sampleTime, mLegato);
+      StartVoice(0, channel, key, pitch, velocity, offset, sampleTime, retrigger);
 
       // in mono modes only ever 1 sustained note
       mSustainedNotes.clear();
@@ -433,7 +434,9 @@ void VoiceAllocator::NoteOn(VoiceInputEvent e, int64_t sampleTime)
       }
       if(i >= 0)
       {
-        StartVoice(i, channel, key, pitch, velocity, offset, sampleTime, mLegato);
+        // TODO retrig / legato
+        bool retrigger = false; // false if at least one voice is active and legato is activated
+        StartVoice(i, channel, key, pitch, velocity, offset, sampleTime, retrigger);
       }
       break;
     }
