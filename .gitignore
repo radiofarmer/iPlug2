@@ -45,3 +45,5 @@ Examples/IPlugSwift/Pods
 PodFile.lock
 */*/.vscode/ipch
 Examples/Tablitsa*
+Examples/*/EBWebView
+Examples/*/packages

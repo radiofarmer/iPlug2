@@ -27,7 +27,7 @@ template<typename T = double>
 class LFO : public IOscillator<T>
 {
 public:
-  enum ETempoDivison
+  enum ETempoDivision
   {
     k64th = 0,   // 1 sixty fourth of a beat
     k32nd,       // 1 thirty second of a beat
@@ -71,7 +71,7 @@ public:
   };
 
   /** Get the scalar factor to convert a ramp at the host BPM to tempo division value */
-  static T GetQNScalar(ETempoDivison division)
+  static T GetQNScalar(ETempoDivision division)
   {
     static constexpr T scalars[kNumDivisions] = {
       64.   / 4., // k64th = 0,   // 1 sixty fourth of a beat
@@ -96,7 +96,7 @@ public:
   }
   
   /** Get a CString to display the divisor as text */
-  static const char* GetQNDisplay(ETempoDivison division)
+  static const char* GetQNDisplay(ETempoDivision division)
   {
     static const char* displays[kNumDivisions] = { LFO_TEMPODIV_VALIST };
     return displays[division];
@@ -166,7 +166,7 @@ public:
   
   void SetQNScalarFromDivision(int division)
   {
-    mQNScalar = GetQNScalar(static_cast<ETempoDivison>(Clip(division, 0, (int) kNumDivisions)));
+    mQNScalar = GetQNScalar(static_cast<ETempoDivision>(Clip(division, 0, (int) kNumDivisions)));
   }
   
   void SetRateMode(bool sync)
