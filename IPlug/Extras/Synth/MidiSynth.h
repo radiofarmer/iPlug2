@@ -118,6 +118,11 @@ public:
     mVoiceAllocator.SetControlGlideTime(t);
   }
 
+  void SetMonoUnison(int nVoices)
+  {
+    mVoiceAllocator.SetMonoUnison(nVoices);
+  }
+
   void SetLegato(bool legato)
   {
     mVoiceAllocator.SetLegato(legato);

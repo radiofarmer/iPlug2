@@ -411,11 +411,12 @@ void VoiceAllocator::NoteOn(VoiceInputEvent e, int64_t sampleTime)
     case kPolyModeMono:
     {
       // TODO retrig / legato
-      bool retrigger = false; // false if at least one voice is active and legato is activated
+      bool retrigger = false;
       // trigger all voices in zone
       //StartVoices(VoicesMatchingAddress({e.mAddress.mZone, kAllChannels, kAllKeys, 0}), channel, key, pitch, velocity, offset, sampleTime, mLegato);
 
-      StartVoice(0, channel, key, pitch, velocity, offset, sampleTime, retrigger);
+      for (int i{0}; i < mMonoUnison; ++i)
+        StartVoice(i, channel, key, pitch, velocity, offset, sampleTime, retrigger);
 
       // in mono modes only ever 1 sustained note
       mSustainedNotes.clear();
@@ -506,7 +507,8 @@ void VoiceAllocator::NoteOff(VoiceInputEvent e, int64_t sampleTime)
     else
     {
       // there are no held keys, so no voices in the zone should be playing.
-      StopVoice(0, offset);
+      for (int i{ 0 }; i < mMonoUnison; ++i)
+        StopVoice(i, offset);
     }
 
     if(doPlayQueuedKey)
@@ -516,7 +518,8 @@ void VoiceAllocator::NoteOff(VoiceInputEvent e, int64_t sampleTime)
       float pitch = mKeyToPitchFn(queuedKey + static_cast<int>(mPitchOffset));
       bool retrig = false;
 
-      StartVoice(0, channel, queuedKey, pitch, mMinHeldVelocity, offset, sampleTime, mLegato);
+      for (int i{ 0 }; i < mMonoUnison; ++i)
+        StartVoice(i, channel, queuedKey, pitch, mMinHeldVelocity, offset, sampleTime, mLegato);
     }
   }
   else // poly

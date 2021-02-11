@@ -112,6 +112,7 @@ public:
   void SetSampleRateAndBlockSize(double sampleRate, int blockSize) { mSampleRate = sampleRate; CalcGlideTimesInSamples(); }
   void SetNoteGlideTime(double t) { mNoteGlideTime = t; CalcGlideTimesInSamples(); }
   void SetControlGlideTime(double t) { mControlGlideTime = t; CalcGlideTimesInSamples(); }
+  void SetMonoUnison(int nVoices) { mMonoUnison = nVoices; }
   void SetLegato(bool legato) { mLegato = legato; }
 
   /** Add a synth voice to the allocator. We do not take ownership ot the voice.
@@ -172,9 +173,10 @@ private:
   std::vector<int> mHeldKeys; // The currently physically held keys on the keyboard
   std::vector<int> mSustainedNotes; // Any notes that are sustained, including those that are physically held
   bool mLegato{ false };
+  int mMonoUnison{ 2 };
 
   std::function<float(int)> mKeyToPitchFn;
-  double mPitchOffset{0.};
+  double mPitchOffset{ 0. };
 
   double mNoteGlideTime{0.};
   double mControlGlideTime{0.01};
