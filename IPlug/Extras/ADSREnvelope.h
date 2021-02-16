@@ -35,7 +35,7 @@ public:
   static constexpr T ENV_VALUE_LOW = 0.000001; // -120dB
   static constexpr T ENV_VALUE_HIGH = 0.999;
   
-private:
+protected:
 #if DEBUG_ENV
   bool mEnableDBGMSG = false;
 #endif
@@ -320,7 +320,7 @@ public:
     return mPrevOutput;
   }
 
-private:
+protected:
   inline T CalcIncrFromTimeLinear(T timeMS, T sr) const
   {
     if (timeMS <= 0.) return 0.;
