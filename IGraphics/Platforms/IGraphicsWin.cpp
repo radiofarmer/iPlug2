@@ -241,13 +241,11 @@ void IGraphicsWin::OnDisplayTimer(int vBlankCount)
     return; // TODO: check this!
   }
 
-  if (false)
-  {
-    // TODO: move this... listen to the right messages in windows for screen resolution changes, etc.
-    float scale = GetScaleForHWND(mPlugWnd);
-    if (scale != GetScreenScale())
-      SetScreenScale(scale);
-  }
+  // TODO: move this... listen to the right messages in windows for screen resolution changes, etc.
+  
+  float scale = GetScaleForHWND(mPlugWnd);
+  if (scale != GetScreenScale())
+    SetScreenScale(scale);
 
   // TODO: this is far too aggressive for slow drawing animations and data changing.  We need to
   // gate the rate of updates to a certain percentage of the wall clock time.

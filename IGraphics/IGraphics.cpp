@@ -79,7 +79,7 @@ IGraphics::~IGraphics()
 
 void IGraphics::SetScreenScale(float scale)
 {
-  mScreenScale = scale;
+  //mScreenScale = scale;
   int windowWidth = WindowWidth() * GetPlatformWindowScale();
   int windowHeight = WindowHeight() * GetPlatformWindowScale();
     
@@ -1815,7 +1815,7 @@ void IGraphics::RetainBitmap(const IBitmap& bitmap, const char* cacheName)
 
 IBitmap IGraphics::ScaleBitmap(const IBitmap& inBitmap, const char* name, int scale)
 {
-  int screenScale = GetRoundedScreenScale();
+  int screenScale = GetScreenScale();
   float drawScale = GetDrawScale();
 
   mScreenScale = scale;
