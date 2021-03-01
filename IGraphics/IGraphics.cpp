@@ -79,7 +79,7 @@ IGraphics::~IGraphics()
 
 void IGraphics::SetScreenScale(float scale)
 {
-  //mScreenScale = scale;
+  mScreenScale = scale;
   int windowWidth = WindowWidth() * GetPlatformWindowScale();
   int windowHeight = WindowHeight() * GetPlatformWindowScale();
     
