@@ -447,7 +447,7 @@ public:
     if(factor != mFactor)
     {
       mFactor = factor;
-      mRate = std::pow(2, (int) factor);
+      mRate = (int)std::pow(2, (int) factor);
       
       Reset();
     }

@@ -170,7 +170,7 @@ T Downsampler2xFPU <NC, T>::process_sample (const T in_ptr [2])
     &_y [0]
   );
 
-  return (0.5f * (spl_0 + spl_1));
+  return (0.5 * (spl_0 + spl_1));
 }
 
 

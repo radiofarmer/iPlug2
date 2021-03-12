@@ -77,7 +77,7 @@ IGraphics::~IGraphics()
   svgStorage.Release();
 }
 
-void IGraphics::SetScreenScale(int scale)
+void IGraphics::SetScreenScale(float scale)
 {
   mScreenScale = scale;
   int windowWidth = WindowWidth() * GetPlatformWindowScale();
@@ -1445,9 +1445,13 @@ void IGraphics::PopupHostContextMenuForParam(IControl* pControl, int paramIdx, f
 
         pVST3ContextMenu->addItem(item, pControl);
       }
-
+#ifdef OS_WIN
       x *= GetTotalScale();
       y *= GetTotalScale();
+#else
+      x *= GetDrawScale();
+      y *= GetDrawScale();
+#endif
       pVST3ContextMenu->popup((Steinberg::UCoord) x, (Steinberg::UCoord) y);
       pVST3ContextMenu->release();
     }
@@ -1490,8 +1494,8 @@ void IGraphics::OnDragResize(float x, float y)
 IBitmap IGraphics::GetScaledBitmap(IBitmap& src)
 {
   //TODO: bug with # frames!
-//  return LoadBitmap(src.GetResourceName().Get(), src.N(), src.GetFramesAreHorizontal(), (GetScreenScale() == 1 && GetDrawScale() > 1.) ? 2 : 0 /* ??? */);
-  return LoadBitmap(src.GetResourceName().Get(), src.N(), src.GetFramesAreHorizontal(), GetScreenScale());
+//  return LoadBitmap(src.GetResourceName().Get(), src.N(), src.GetFramesAreHorizontal(), (GetRoundedScreenScale() == 1 && GetDrawScale() > 1.) ? 2 : 0 /* ??? */);
+  return LoadBitmap(src.GetResourceName().Get(), src.N(), src.GetFramesAreHorizontal(), GetRoundedScreenScale());
 }
 
 void IGraphics::EnableTooltips(bool enable)
@@ -1691,7 +1695,7 @@ WDL_TypedBuf<uint8_t> IGraphics::LoadResource(const char* fileNameOrResID, const
 IBitmap IGraphics::LoadBitmap(const char* name, int nStates, bool framesAreHorizontal, int targetScale)
 {
   if (targetScale == 0)
-    targetScale = GetScreenScale();
+    targetScale = GetRoundedScreenScale();
 
   StaticStorage<APIBitmap>::Accessor storage(sBitmapCache);
   APIBitmap* pAPIBitmap = storage.Find(name, targetScale);
@@ -1753,7 +1757,7 @@ IBitmap IGraphics::LoadBitmap(const char* name, int nStates, bool framesAreHoriz
 IBitmap IGraphics::LoadBitmap(const char *name, const void *pData, int dataSize, int nStates, bool framesAreHorizontal, int targetScale)
 {
   if (targetScale == 0)
-    targetScale = GetScreenScale();
+    targetScale = GetRoundedScreenScale();
 
   StaticStorage<APIBitmap>::Accessor storage(sBitmapCache);
   APIBitmap* pAPIBitmap = storage.Find(name, targetScale);
@@ -1955,7 +1959,7 @@ void IGraphics::StartLayer(IControl* pControl, const IRECT& r, bool cacheable)
   const int w = static_cast<int>(std::ceil(pixelBackingScale * std::ceil(alignedBounds.W())));
   const int h = static_cast<int>(std::ceil(pixelBackingScale * std::ceil(alignedBounds.H())));
 
-  PushLayer(new ILayer(CreateAPIBitmap(w, h, GetScreenScale(), GetDrawScale(), cacheable), alignedBounds, pControl, pControl ? pControl->GetRECT() : IRECT()));
+  PushLayer(new ILayer(CreateAPIBitmap(w, h, GetRoundedScreenScale(), GetDrawScale(), cacheable), alignedBounds, pControl, pControl ? pControl->GetRECT() : IRECT()));
 }
 
 void IGraphics::ResumeLayer(ILayerPtr& layer)
@@ -2013,7 +2017,7 @@ bool IGraphics::CheckLayer(const ILayerPtr& layer)
     layer->Invalidate();
   }
 
-  return pBitmap && !layer->mInvalid && pBitmap->GetDrawScale() == GetDrawScale() && pBitmap->GetScale() == GetScreenScale();
+  return pBitmap && !layer->mInvalid && pBitmap->GetDrawScale() == GetDrawScale() && pBitmap->GetScale() == GetRoundedScreenScale();
 }
 
 void IGraphics::DrawLayer(const ILayerPtr& layer, const IBlend* pBlend)

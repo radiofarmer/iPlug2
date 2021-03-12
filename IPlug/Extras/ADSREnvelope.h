@@ -143,16 +143,6 @@ public:
     mReleased = false;
   }
 
-  inline void StartAt(T level, T envValue, T prevResult, int stage, T timeScalar = 1.)
-  {
-    mLevel = level;
-    mEnvValue = envValue;
-    mPrevResult = prevResult;
-    mStage = stage;
-    mReleased = stage == kRelease;
-    mScalar = 1. / timeScalar;
-  }
-
   /** Release the envelope */
   inline void Release()
   {

@@ -98,7 +98,7 @@ Upsampler2xFPU <NC, T>::Upsampler2xFPU ()
 {
   for (int i = 0; i < NBR_COEFS; ++i)
   {
-    _coef [i] = 0;
+    _coef [i] = (T)0;
   }
   clear_buffers ();
 }
@@ -160,8 +160,8 @@ void Upsampler2xFPU <NC, T>::clear_buffers ()
 {
   for (int i = 0; i < NBR_COEFS; ++i)
   {
-    _x [i] = 0;
-    _y [i] = 0;
+    _x [i] = (T)0;
+    _y [i] = (T)0;
   }
 }
 

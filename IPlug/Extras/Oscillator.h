@@ -204,7 +204,7 @@ public:
   }
 
   T mLastOutput = 0.;
-private:
+protected:
   static const int tableSize = 512; // 2^9
   static const int tableSizeM1 = 511; // 2^9 -1
   static const T mLUT[513];
