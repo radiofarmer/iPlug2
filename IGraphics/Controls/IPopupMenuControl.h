@@ -138,7 +138,6 @@ public:
   /** Set the bounds that the menu can potentially occupy, if not the full graphics context */
   void SetMaxBounds(const IRECT& bounds) { mMaxBounds = bounds; }
 
-private:
   /** Get an IRECT represents the maximum dimensions of the longest text item in the menu */
   IRECT GetLargestCellRectForMenu(IPopupMenu& menu, float x, float y) const;
   
