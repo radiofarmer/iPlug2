@@ -27,6 +27,8 @@
 
 #include "SynthVoice.h"
 
+#include "VoiceThread.h"
+
 BEGIN_IPLUG_NAMESPACE
 
 using namespace voiceControlNames;
@@ -190,6 +192,9 @@ private:
   bool mSustainPedalDown{false};
   float mModWheel{0.f};
   float mMinHeldVelocity{1.f};
+
+  // Multithreading
+  VoiceThreadPool mThreadQueue;
 
 public:
   EPolyMode mPolyMode {kPolyModePoly};

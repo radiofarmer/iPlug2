@@ -534,6 +534,8 @@ void VoiceAllocator::NoteOff(VoiceInputEvent e, int64_t sampleTime)
   }
 }
 
+#define MULTITHREAD_VOICES
+
 void VoiceAllocator::ProcessVoices(sample** inputs, sample** outputs, int nInputs, int nOutputs, int startIndex, int blockSize)
 {
   /*
@@ -541,15 +543,18 @@ void VoiceAllocator::ProcessVoices(sample** inputs, sample** outputs, int nInput
   1. Follow these instructions to add the linking libraries: https://stackoverflow.com/questions/62122247/openmp-linking-errors-in-visual-studio-2019-llvm
   2. Set the compiler option literally as follows (with quotation marks): "-fopenmp"
   */
-  int i{ 0 };
-#pragma omp parallel for num_threads(4)
-  for (i= 0; i < 16; ++i)
+  for (int i = 0; i < 16; ++i)
   {
-    auto* pVoice = mVoicePtrs[i];
-    // TODO distribute voices across cores
+    SynthVoice* pVoice = mVoicePtrs[i];
     if(pVoice->GetBusy())
     {
+#ifndef MULTITHREAD_VOICES
       pVoice->ProcessSamplesAccumulating(inputs, outputs, nInputs, nOutputs, startIndex, blockSize);
+#else
+      mThreadQueue.AddTask(std::bind(&SynthVoice::ProcessSamplesAccumulating, pVoice, inputs, outputs, nInputs, nOutputs, startIndex, blockSize));
+#endif
     }
   }
+
+  mThreadQueue.FinishBlock();
 }
