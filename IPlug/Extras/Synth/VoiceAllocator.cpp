@@ -534,7 +534,7 @@ void VoiceAllocator::NoteOff(VoiceInputEvent e, int64_t sampleTime)
   }
 }
 
-#define MULTITHREAD_VOICES
+#define MULTITHREAD_VOICES !_DEBUG
 
 void VoiceAllocator::ProcessVoices(sample** inputs, sample** outputs, int nInputs, int nOutputs, int startIndex, int blockSize)
 {
@@ -548,7 +548,7 @@ void VoiceAllocator::ProcessVoices(sample** inputs, sample** outputs, int nInput
     SynthVoice* pVoice = mVoicePtrs[i];
     if(pVoice->GetBusy())
     {
-#ifndef MULTITHREAD_VOICES
+#if !MULTITHREAD_VOICES 
       pVoice->ProcessSamplesAccumulating(inputs, outputs, nInputs, nOutputs, startIndex, blockSize);
 #else
       mThreadQueue.AddTask(std::bind(&SynthVoice::ProcessSamplesAccumulating, pVoice, inputs, outputs, nInputs, nOutputs, startIndex, blockSize));
@@ -556,5 +556,7 @@ void VoiceAllocator::ProcessVoices(sample** inputs, sample** outputs, int nInput
     }
   }
 
+#if MULTITHREAD_VOICES && !_DEBUG
   mThreadQueue.FinishBlock();
+#endif
 }
