@@ -534,7 +534,7 @@ void VoiceAllocator::NoteOff(VoiceInputEvent e, int64_t sampleTime)
   }
 }
 
-#define MULTITHREAD_VOICES 0 //!_DEBUG
+#define MULTITHREAD_VOICES !_DEBUG
 
 void VoiceAllocator::ProcessVoices(sample** inputs, sample** outputs, int nInputs, int nOutputs, int startIndex, int blockSize)
 {
