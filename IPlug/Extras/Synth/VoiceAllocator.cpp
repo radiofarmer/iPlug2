@@ -14,8 +14,6 @@
 #include <numeric>
 #include <iostream>
 
-#include "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\Llvm\lib\clang\10.0.0\include\omp.h"
-
 using namespace iplug;
 
 std::ostream& operator<< (std::ostream& out, const VoiceInputEvent& r)
