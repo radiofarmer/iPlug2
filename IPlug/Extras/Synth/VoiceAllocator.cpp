@@ -14,6 +14,8 @@
 #include <numeric>
 #include <iostream>
 
+#include "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\Llvm\lib\clang\10.0.0\include\omp.h"
+
 using namespace iplug;
 
 std::ostream& operator<< (std::ostream& out, const VoiceInputEvent& r)
@@ -415,7 +417,7 @@ void VoiceAllocator::NoteOn(VoiceInputEvent e, int64_t sampleTime)
       // trigger all voices in zone
       //StartVoices(VoicesMatchingAddress({e.mAddress.mZone, kAllChannels, kAllKeys, 0}), channel, key, pitch, velocity, offset, sampleTime, mLegato);
 
-      for (int i{0}; i < mMonoUnison; ++i)
+      for (int i{ 0 }; i < mMonoUnison; ++i)
         StartVoice(i, channel, key, pitch, velocity, offset, sampleTime, retrigger);
 
       // in mono modes only ever 1 sustained note
@@ -532,14 +534,29 @@ void VoiceAllocator::NoteOff(VoiceInputEvent e, int64_t sampleTime)
   }
 }
 
+#define MULTITHREAD_VOICES 0 //!_DEBUG
+
 void VoiceAllocator::ProcessVoices(sample** inputs, sample** outputs, int nInputs, int nOutputs, int startIndex, int blockSize)
 {
-  for(auto pVoice : mVoicePtrs)
+  /*
+  To get OpenMP to work with Clang:
+  1. Follow these instructions to add the linking libraries: https://stackoverflow.com/questions/62122247/openmp-linking-errors-in-visual-studio-2019-llvm
+  2. Set the compiler option literally as follows (with quotation marks): "-fopenmp"
+  */
+  for (int i = 0; i < 16; ++i)
   {
-    // TODO distribute voices across cores
+    SynthVoice* pVoice = mVoicePtrs[i];
     if(pVoice->GetBusy())
     {
+#if !MULTITHREAD_VOICES 
       pVoice->ProcessSamplesAccumulating(inputs, outputs, nInputs, nOutputs, startIndex, blockSize);
+#else
+      mThreadQueue.AddTask(std::bind(&SynthVoice::ProcessSamplesAccumulating, pVoice, inputs, outputs, nInputs, nOutputs, startIndex, blockSize));
+#endif
     }
   }
+
+#if MULTITHREAD_VOICES && !_DEBUG
+  mThreadQueue.FinishBlock();
+#endif
 }
