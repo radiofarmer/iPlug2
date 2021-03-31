@@ -554,7 +554,7 @@ void VoiceAllocator::ProcessVoices(sample** inputs, sample** outputs, int nInput
     }
   }
 
-#if MULTITHREAD_VOICES && !_DEBUG
+#if MULTITHREAD_VOICES
   mThreadQueue.FinishBlock();
 #endif
 }
