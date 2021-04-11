@@ -97,6 +97,12 @@ VoiceInputEvent MidiSynth::MidiMessageToEventBasic(const IMidiMsg& msg)
           event.mAction = kNoteOffAction;
           break;
         }
+        case IMidiMsg::kSustainOnOff:
+        {
+          event.mAddress.mFlags = kVoicesBusy;
+          event.mAction = kSustainAction;
+          break;
+        }
         // handle all other controllers
         default:
         {
