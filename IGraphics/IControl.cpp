@@ -249,20 +249,13 @@ void IControl::SetDisabled(bool disable)
 
 void IControl::OnMouseDown(float x, float y, const IMouseMod& mod)
 {
-  #ifdef PROTOOLS
-  if (mod.A)
-  {
-    SetValueToDefault(GetValIdxForPos(x, y));
-  }
-  #endif
-
   if (mod.R)
     PromptUserInput(GetValIdxForPos(x, y));
 }
 
 void IControl::OnMouseDblClick(float x, float y, const IMouseMod& mod)
 {
-  #ifdef PROTOOLS
+  #ifdef AAX_API
   PromptUserInput(GetValIdxForPos(x, y));
   #else
   SetValueToDefault(GetValIdxForPos(x, y));
@@ -449,7 +442,7 @@ ITextControl::ITextControl(const IRECT& bounds, const char* str, const IText& te
 , mSetBoundsBasedOnStr(setBoundsBasedOnStr)
 {
   mIgnoreMouse = true;
-  IControl::mText = text;
+  mText = text;
 }
 
 void ITextControl::OnInit()
@@ -499,12 +492,11 @@ void ITextControl::SetBoundsBasedOnStr()
 IURLControl::IURLControl(const IRECT& bounds, const char* str, const char* urlStr, const IText& text, const IColor& BGColor, const IColor& MOColor, const IColor& CLColor)
 : ITextControl(bounds, str, text, BGColor)
 , mURLStr(urlStr)
+, mOriginalColor(text.mFGColor)
 , mMOColor(MOColor)
 , mCLColor(CLColor)
-, mOriginalColor(text.mFGColor)
 {
   mIgnoreMouse = false;
-  IControl::mText = text;
 }
 
 void IURLControl::Draw(IGraphics& g)
@@ -560,10 +552,16 @@ void IURLControl::OnMouseDown(float x, float y, const IMouseMod& mod)
   mClicked = true;
 }
 
+void IURLControl::SetText(const IText& txt)
+{
+  mText = txt;
+  mOriginalColor = txt.mFGColor;
+}
+
 ITextToggleControl::ITextToggleControl(const IRECT& bounds, int paramIdx, const char* offText, const char* onText, const IText& text, const IColor& bgColor)
 : ITextControl(bounds, offText, text, bgColor)
-, mOnText(onText)
 , mOffText(offText)
+, mOnText(onText)
 {
   SetParamIdx(paramIdx);
   //TODO: assert boolean?
@@ -573,8 +571,8 @@ ITextToggleControl::ITextToggleControl(const IRECT& bounds, int paramIdx, const 
 
 ITextToggleControl::ITextToggleControl(const IRECT& bounds, IActionFunction aF, const char* offText, const char* onText, const IText& text, const IColor& bgColor)
 : ITextControl(bounds, offText, text, bgColor)
-, mOnText(onText)
 , mOffText(offText)
+, mOnText(onText)
 {
   SetActionFunction(aF);
   mDblAsSingleClick = true;
@@ -833,20 +831,7 @@ void IKnobControlBase::OnMouseDrag(float x, float y, float dX, float dY, const I
   const IParam* pParam = GetParam();
   
   if (pParam && pParam->GetStepped() && pParam->GetStep() > 0)
-  {
-    const double range = pParam->GetRange();
-    
-    if (range > 0.)
-    {
-      double l, h;
-      pParam->GetBounds(l, h);
-
-      v = l + mMouseDragValue * range;
-      v = v - std::fmod(v, pParam->GetStep());
-      v -= l;
-      v /= range;
-    }
-  }
+    v = pParam->ConstrainNormalized(mMouseDragValue);
 
   SetValue(v);
   SetDirty();
@@ -861,19 +846,13 @@ void IKnobControlBase::OnMouseWheel(float x, float y, const IMouseMod& mod, floa
   
   if (pParam && pParam->GetStepped() && pParam->GetStep() > 0)
   {
-    const double range = pParam->GetRange();
-
-    if (range > 0. && d != 0.f)
+    if (d != 0.f)
     {
-      double l, h;
-      pParam->GetBounds(l,h);
-      v = l + GetValue() * range;
       const double step = pParam->GetStep();
+
+      v = pParam->FromNormalized(v);
       v += d > 0 ? step : -step;
-      v = Clip(v, l, h);
-      v = v - std::fmod(v, step);
-      v -= l;
-      v /= range;
+      v = pParam->ToNormalized(v);
     }
   }
 
@@ -967,20 +946,7 @@ void ISliderControlBase::OnMouseDrag(float x, float y, float dX, float dY, const
   double v = mMouseDragValue;
   
   if (pParam && pParam->GetStepped() && pParam->GetStep() > 0)
-  {
-    const double range = pParam->GetRange();
-    
-    if (range > 0.)
-    {
-      double l, h;
-      pParam->GetBounds(l,h);
-
-      v = l + mMouseDragValue * range;
-      v = v - std::fmod(v, pParam->GetStep());
-      v -= l;
-      v /= range;
-    }
-  }
+    v = pParam->ConstrainNormalized(mMouseDragValue);
 
   SetValue(v);
   SetDirty(true);
@@ -995,19 +961,13 @@ void ISliderControlBase::OnMouseWheel(float x, float y, const IMouseMod& mod, fl
   
   if (pParam && pParam->GetStepped() && pParam->GetStep() > 0)
   {
-    const double range = pParam->GetRange();
-
-    if (range > 0. && d != 0.f)
+    if (d != 0.f)
     {
-      double l, h;
-      pParam->GetBounds(l,h);
-      v = l + GetValue() * range;
       const double step = pParam->GetStep();
+          
+      v = pParam->FromNormalized(v);
       v += d > 0 ? step : -step;
-      v = Clip(v, l, h);
-      v = v - std::fmod(v, step);
-      v -= l;
-      v /= range;
+      v = pParam->ToNormalized(v);
     }
   }
 
@@ -1142,7 +1102,7 @@ void IDirBrowseControlBase::ScanDirectory(const char* path, IPopupMenu& menuToAd
             WDL_String menuEntry {f};
             
             if(!mShowFileExtensions)
-              menuEntry.Set(f, (int) (a - f));
+              menuEntry.Set(f, (int) (a - f) - 1);
             
             IPopupMenu::Item* pItem = new IPopupMenu::Item(menuEntry.Get(), IPopupMenu::Item::kNoFlags, mFiles.GetSize());
             menuToAddTo.AddItem(pItem, -2 /* sort alphabetically */);

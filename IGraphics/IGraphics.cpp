@@ -44,15 +44,14 @@ static StaticStorage<APIBitmap> sBitmapCache;
 static StaticStorage<SVGHolder> sSVGCache;
 
 IGraphics::IGraphics(IGEditorDelegate& dlg, int w, int h, int fps, float scale)
-: mDelegate(&dlg)
-, mWidth(w)
+: mWidth(w)
 , mHeight(h)
+, mFPS(fps)
 , mDrawScale(scale)
 , mMinScale(scale / 2)
 , mMaxScale(scale * 2)
+, mDelegate(&dlg)
 {
-  mFPS = (fps > 0 ? fps : DEFAULT_FPS);
-    
   StaticStorage<APIBitmap>::Accessor bitmapStorage(sBitmapCache);
   bitmapStorage.Retain();
   StaticStorage<SVGHolder>::Accessor svgStorage(sSVGCache);
@@ -464,7 +463,7 @@ void IGraphics::DisableControl(int paramIdx, bool disable)
   ForMatchingControls(&IControl::SetDisabled, paramIdx, disable);
 }
 
-void IGraphics::ForControlWithParam(int paramIdx, std::function<void(IControl& control)> func)
+void IGraphics::ForControlWithParam(int paramIdx, std::function<void(IControl* pControl)> func)
 {
   for (auto c = 0; c < NControls(); c++)
   {
@@ -472,13 +471,13 @@ void IGraphics::ForControlWithParam(int paramIdx, std::function<void(IControl& c
 
     if (pControl->LinkedToParam(paramIdx) > kNoValIdx)
     {
-      func(*pControl);
+      func(pControl);
       // Could be more than one, don't break until we check them all.
     }
   }
 }
 
-void IGraphics::ForControlInGroup(const char* group, std::function<void(IControl& control)> func)
+void IGraphics::ForControlInGroup(const char* group, std::function<void(IControl* pControl)> func)
 {
   for (auto c = 0; c < NControls(); c++)
   {
@@ -487,44 +486,44 @@ void IGraphics::ForControlInGroup(const char* group, std::function<void(IControl
     if (CStringHasContents(pControl->GetGroup()))
     {
       if (strcmp(pControl->GetGroup(), group) == 0)
-        func(*pControl);
+        func(pControl);
       // Could be more than one, don't break until we check them all.
     }
   }
 }
 
-void IGraphics::ForStandardControlsFunc(std::function<void(IControl& control)> func)
+void IGraphics::ForStandardControlsFunc(std::function<void(IControl* pControl)> func)
 {
   for (auto c = 0; c < NControls(); c++)
-    func(*GetControl(c));
+    func(GetControl(c));
 }
 
-void IGraphics::ForAllControlsFunc(std::function<void(IControl& control)> func)
+void IGraphics::ForAllControlsFunc(std::function<void(IControl* pControl)> func)
 {
   ForStandardControlsFunc(func);
   
   if (mPerfDisplay)
-    func(*mPerfDisplay);
+    func(mPerfDisplay.get());
   
 #ifndef NDEBUG
   if (mLiveEdit)
-    func(*mLiveEdit);
+    func(mLiveEdit.get());
 #endif
   
   if (mCornerResizer)
-    func(*mCornerResizer);
+    func(mCornerResizer.get());
   
   if (mTextEntryControl)
-    func(*mTextEntryControl);
+    func(mTextEntryControl.get());
   
   if (mPopupControl)
-    func(*mPopupControl);
+    func(mPopupControl.get());
   
   if (mBubbleControls.GetSize())
   {
     for(int i = 0;i<mBubbleControls.GetSize();i++)
     {
-      func(*mBubbleControls.Get(i));
+      func(mBubbleControls.Get(i));
     }
   }
 }
@@ -532,13 +531,13 @@ void IGraphics::ForAllControlsFunc(std::function<void(IControl& control)> func)
 template<typename T, typename... Args>
 void IGraphics::ForAllControls(T method, Args... args)
 {
-  ForAllControlsFunc([method, args...](IControl& control) { (control.*method)(args...); });
+  ForAllControlsFunc([method, args...](IControl* pControl) { (pControl->*method)(args...); });
 }
 
 template<typename T, typename... Args>
 void IGraphics::ForMatchingControls(T method, int paramIdx, Args... args)
 {
-  ForControlWithParam(paramIdx, [method, args...](IControl& control) { (control.*method)(args...); });
+  ForControlWithParam(paramIdx, [method, args...](IControl* pControl) { (pControl->*method)(args...); });
 }
 
 void IGraphics::SetAllControlsDirty()
@@ -553,10 +552,10 @@ void IGraphics::SetAllControlsClean()
 
 void IGraphics::AssignParamNameToolTips()
 {
-  auto func = [](IControl& control)
+  auto func = [](IControl* pControl)
   {
-    if (control.GetParamIdx() > kNoParameter)
-      control.SetTooltip(control.GetParam()->GetName());
+    if (pControl->GetParamIdx() > kNoParameter)
+      pControl->SetTooltip(pControl->GetParam()->GetName());
   };
   
   ForStandardControlsFunc(func);
@@ -567,14 +566,14 @@ void IGraphics::UpdatePeers(IControl* pCaller, int callerValIdx) // TODO: this c
   double value = pCaller->GetValue(callerValIdx);
   int paramIdx = pCaller->GetParamIdx(callerValIdx);
     
-  auto func = [pCaller, paramIdx, value](IControl& control)
+  auto func = [pCaller, paramIdx, value](IControl* pControl)
   {
-    int valIdx = control.LinkedToParam(paramIdx);
+    int valIdx = pControl->LinkedToParam(paramIdx);
 
     // Not actually called from the delegate, but we don't want to push the updates back to the delegate
-    if ((valIdx > kNoValIdx) && (&control != pCaller))
+    if ((valIdx > kNoValIdx) && (pControl != pCaller))
     {
-      control.SetValueFromDelegate(value, valIdx);
+      pControl->SetValueFromDelegate(value, valIdx);
     }
   };
     
@@ -781,16 +780,15 @@ bool IGraphics::IsDirty(IRECTList& rects)
   if (mDisplayTickFunc)
     mDisplayTickFunc();
 
-  ForAllControlsFunc([](IControl& control) { control.Animate(); } );
+  ForAllControlsFunc([](IControl* pControl) { pControl->Animate(); } );
 
   bool dirty = false;
     
-  auto func = [&dirty, &rects](IControl& control)
-  {
-    if (control.IsDirty())
+  auto func = [&dirty, &rects](IControl* pControl) {
+    if (pControl->IsDirty())
     {
       // N.B padding outlines for single line outlines
-      rects.Add(control.GetRECT().GetPadded(0.75));
+      rects.Add(pControl->GetRECT().GetPadded(0.75));
       dirty = true;
     }
   };
@@ -865,7 +863,7 @@ void IGraphics::DrawControl(IControl* pControl, const IRECT& bounds, float scale
 
 void IGraphics::Draw(const IRECT& bounds, float scale)
 {
-  ForAllControlsFunc([this, bounds, scale](IControl& control) { DrawControl(&control, bounds, scale); });
+  ForAllControlsFunc([this, bounds, scale](IControl* pControl) { DrawControl(pControl, bounds, scale); });
 
 #ifndef NDEBUG
   if (mShowAreaDrawn)
@@ -956,40 +954,41 @@ void IGraphics::OnMouseDown(const std::vector<IMouseInfo>& points)
       int paramIdx = pCapturedControl->GetParamIdx((valIdx > kNoValIdx) ? valIdx : 0);
 
 #ifdef AAX_API
-        if (mAAXViewContainer && paramIdx > kNoParameter)
-        {
-            auto GetAAXModifiersFromIMouseMod = [](const IMouseMod& mod) {
-                uint32_t modifiers = 0;
-                
-                if (mod.A) modifiers |= AAX_eModifiers_Option; // ALT Key on Windows, ALT/Option key on mac
-                
+      if (mAAXViewContainer && paramIdx > kNoParameter)
+      {
+        auto GetAAXModifiersFromIMouseMod = [](const IMouseMod& mod) {
+          uint32_t modifiers = 0;
+          
+          if (mod.A) modifiers |= AAX_eModifiers_Option; // ALT Key on Windows, ALT/Option key on mac
+          
 #ifdef OS_WIN
-                if (mod.C) modifiers |= AAX_eModifiers_Command;
+          if (mod.C) modifiers |= AAX_eModifiers_Command;
 #else
-                if (mod.C) modifiers |= AAX_eModifiers_Control;
-                if (mod.R) modifiers |= AAX_eModifiers_Command;
+          if (mod.C) modifiers |= AAX_eModifiers_Control;
+          if (mod.R) modifiers |= AAX_eModifiers_Command;
 #endif
-                if (mod.S) modifiers |= AAX_eModifiers_Shift;
-                if (mod.R) modifiers |= AAX_eModifiers_SecondaryButton;
-                
-                return modifiers;
-            };
-            
-            uint32_t aaxModifiersForPT = GetAAXModifiersFromIMouseMod(mod);
+          if (mod.S) modifiers |= AAX_eModifiers_Shift;
+          if (mod.R) modifiers |= AAX_eModifiers_SecondaryButton;
+          
+          return modifiers;
+        };
+        
+        uint32_t aaxModifiersForPT = GetAAXModifiersFromIMouseMod(mod);
 #ifdef OS_WIN
-            // required to get start/windows and alt keys
-            uint32_t aaxModifiersFromPT = 0;
-            mAAXViewContainer->GetModifiers(&aaxModifiersFromPT);
-            aaxModifiersForPT |= aaxModifiersFromPT;
+        // required to get start/windows and alt keys
+        uint32_t aaxModifiersFromPT = 0;
+        mAAXViewContainer->GetModifiers(&aaxModifiersFromPT);
+        aaxModifiersForPT |= aaxModifiersFromPT;
 #endif
-            WDL_String paramID;
-            paramID.SetFormatted(32, "%i", paramIdx+1);
-            
-            if (mAAXViewContainer->HandleParameterMouseDown(paramID.Get(), aaxModifiersForPT) == AAX_SUCCESS)
-            {
-                return; // event handled by PT
-            }
+        WDL_String paramID;
+        paramID.SetFormatted(32, "%i", paramIdx+1);
+        
+        if (mAAXViewContainer->HandleParameterMouseDown(paramID.Get(), aaxModifiersForPT) == AAX_SUCCESS)
+        {
+          ReleaseMouseCapture();
+          return; // event handled by PT
         }
+      }
 #endif
 
 #ifndef IGRAPHICS_NO_CONTEXT_MENU
@@ -1039,7 +1038,7 @@ void IGraphics::OnMouseUp(const std::vector<IMouseInfo>& points)
             GetDelegate()->EndInformHostOfParamChangeFromUI(pCapturedControl->GetParamIdx(v));
         }
         
-        mCapturedMap.erase(itr);
+        mCapturedMap.erase(mod.touchID);
       }
     }
   }
@@ -1445,9 +1444,13 @@ void IGraphics::PopupHostContextMenuForParam(IControl* pControl, int paramIdx, f
 
         pVST3ContextMenu->addItem(item, pControl);
       }
-
+#ifdef OS_WIN
       x *= GetTotalScale();
       y *= GetTotalScale();
+#else
+      x *= GetDrawScale();
+      y *= GetDrawScale();
+#endif
       pVST3ContextMenu->popup((Steinberg::UCoord) x, (Steinberg::UCoord) y);
       pVST3ContextMenu->release();
     }

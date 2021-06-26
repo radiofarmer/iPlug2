@@ -355,10 +355,10 @@ public:
    * @param bounds after calling the method this IRECT will be updated with the rectangular region the text will occupy */
   virtual float MeasureText(const IText& text, const char* str, IRECT& bounds) const;
 
-  /** Get the color of a point. On a 1:1 screen this corresponds to a pixel. \todo check this
+  /** Get the color at an X, Y location in the graphics context
    * @param x The X coordinate of the pixel
    * @param y The Y coordinate of the pixel
-   * @return An IColor specifiying the color of the pixel at x,y */
+   * @return An IColor specifiying the color of the pixel at x, y */
   virtual IColor GetPoint(int x, int y)  = 0;
 
   /** Gets a void pointer to underlying drawing context, for the IGraphics backend
@@ -953,7 +953,7 @@ protected:
 
 #pragma mark - Base implementation
 public:
-  IGraphics(IGEditorDelegate& dlg, int w, int h, int fps = 0, float scale = 1.);
+  IGraphics(IGEditorDelegate& dlg, int w, int h, int fps = DEFAULT_FPS, float scale = 1.);
 
   virtual ~IGraphics();
     
@@ -1219,7 +1219,7 @@ private:
 public:
   /** For all controls, including the "special controls" call a method
    * @param func A std::function to perform on each control */
-  void ForAllControlsFunc(std::function<void(IControl& control)> func);
+  void ForAllControlsFunc(std::function<void(IControl* pControl)> func);
   
   /** For all controls, including the "special controls" call a method
    * @param method The method to call
@@ -1229,7 +1229,7 @@ public:
   
   /** For all standard controls in the main control stack perform a function
    * @param func A std::function to perform on each control */
-  void ForStandardControlsFunc(std::function<void(IControl& control)> func);
+  void ForStandardControlsFunc(std::function<void(IControl* pControl)> func);
   
   /** For all standard controls in the main control stack that are linked to a specific parameter, call a method
    * @param method The method to call
@@ -1241,12 +1241,12 @@ public:
   /** For all standard controls in the main control stack that are linked to a specific parameter, execute a function
    * @param paramIdx The parameter index to match
    * @param func A std::function to perform on each control */
-  void ForControlWithParam(int paramIdx, std::function<void(IControl& control)> func);
+  void ForControlWithParam(int paramIdx, std::function<void(IControl* pControl)> func);
   
   /** For all standard controls in the main control stack that are linked to a group, execute a function
    * @param group CString specificying the goupd name
    * @param func A std::function to perform on each control */
-  void ForControlInGroup(const char* group, std::function<void(IControl& control)> func);
+  void ForControlInGroup(const char* group, std::function<void(IControl* pControl)> func);
   
   /** Attach an IBitmapControl as the lowest IControl in the control stack to be the background for the graphics context
    * @param fileName CString fileName resource id for the bitmap image */
